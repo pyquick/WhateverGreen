@@ -10,7 +10,6 @@
 #include <Headers/kern_iokit.hpp>
 #include <Headers/kern_cpu.hpp>
 #include "kern_weg.hpp"
-#include <cstdio>
 #include <IOKit/graphics/IOFramebuffer.h>
 #include <mach/mach_types.h>
 #include <libkern/libkern.h>
@@ -137,11 +136,6 @@ void WEG::init() {
 		char wegMode[16] = {};
 		if (PE_parse_boot_argn("wegmode", wegMode, sizeof(wegMode)) && strcmp(wegMode, "norec") == 0) {
 			// 检查是否处于恢复模式
-			char rootDmg[256] = {};
-			if (PE_parse_boot_argn("root-dmg", rootDmg, sizeof(rootDmg))) {
-				SYSLOG("weg", "wegmode=norec: detected Recovery mode, skipping WEG initialization");
-				return;
-			}
 			if (PE_parse_boot_argn("rp", bootArgValue, sizeof(bootArgValue))) {
 				// 为了提高可靠性，我们检查参数值中是否包含 "com.apple.recovery.boot"
 				if (strstr(bootArgValue, "com.apple.recovery.boot") != NULL) {
