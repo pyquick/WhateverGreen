@@ -15,31 +15,6 @@
 #include <libkern/libkern.h>
 #include <pexpert/pexpert.h>
 #include <string.h>
-
-// 定义一个足够大的缓冲区来存储启动参数的值
-#define BOOT_ARG_BUFFER_SIZE 256
-
-/**
- * @brief 检查当前macOS内核是否在恢复模式下运行。
- *
- * @return 如果系统处于恢复模式，则返回 true；否则返回 false。
- */
-
-// --- 在您的 KEXT start 方法中调用 ---
-//
-// kern_return_t YourKext::start(kmod_info_t *ki, void *d) {
-//     ...
-//     if (isInRecoveryMode()) {
-//         // 系统处于恢复模式，执行相应的逻辑
-//         printf("KextLog: Kext 正在恢复模式下运行。\n");
-//     } else {
-//         // 系统处于正常模式
-//         printf("KextLog: Kext 正在正常模式下运行。\n");
-//     }
-//     ...
-//     return KERN_SUCCESS;
-// }
-// This is a hack to let us access protected properties.
 struct FramebufferViewer : public IOFramebuffer {
 	static IOMemoryMap *&getVramMap(IOFramebuffer *fb) {
 		return static_cast<FramebufferViewer *>(fb)->fVramMap;
@@ -135,19 +110,15 @@ void WEG::init() {
 	if (getKernelVersion() >= KernelVersion::Tahoe) {
 		char wegMode[16] = {};
 		if (PE_parse_boot_argn("wegmode", wegMode, sizeof(wegMode)) && strcmp(wegMode, "norec") == 0) {
-			// 检查是否处于恢复模式
 			if (PE_parse_boot_argn("rp", bootArgValue, sizeof(bootArgValue))) {
-				// 为了提高可靠性，我们检查参数值中是否包含 "com.apple.recovery.boot"
 				if (strstr(bootArgValue, "com.apple.recovery.boot") != NULL) {
 					SYSLOG("weg", "wegmode=norec: detected Recovery mode, skipping WEG initialization");
-					printf("KextLog: 检测到恢复模式启动参数 'rp'，值为: %s\n", bootArgValue);
 					return;
 				}
 			}
 		}
 	}
-	// Black screen fix is needed everywhere, but the form depends on the boot-arg.
-	// Former boot-arg name is ngfxpatch.
+	
 	char agdp[128];
 	if (PE_parse_boot_argn("agdpmod", agdp, sizeof(agdp)))
 		processGraphicsPolicyStr(agdp);
