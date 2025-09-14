@@ -107,6 +107,7 @@ void WEG::init() {
 	} else {
 		resetFramebuffer = FB_NONE;
 	}
+	char bootArgValue[256];
 	if (getKernelVersion() >= KernelVersion::Tahoe) {
 		char wegMode[16] = {};
 		if (PE_parse_boot_argn("wegmode", wegMode, sizeof(wegMode)) && strcmp(wegMode, "norec") == 0) {
