@@ -107,17 +107,7 @@ void WEG::init() {
 	} else {
 		resetFramebuffer = FB_NONE;
 	}
-	if (getKernelVersion() >= KernelVersion::Tahoe) {
-		char wegMode[16] = {};
-		if (PE_parse_boot_argn("wegmode", wegMode, sizeof(wegMode)) && strcmp(wegMode, "norec") == 0) {
-			if (PE_parse_boot_argn("rp", bootArgValue, sizeof(bootArgValue))) {
-				if (strstr(bootArgValue, "com.apple.recovery.boot") != NULL) {
-					SYSLOG("weg", "wegmode=norec: detected Recovery mode, skipping WEG initialization");
-					return;
-				}
-			}
-		}
-	}
+	
 	
 	char agdp[128];
 	if (PE_parse_boot_argn("agdpmod", agdp, sizeof(agdp)))
@@ -274,7 +264,8 @@ void WEG::processKernel(KernelPatcher &patcher) {
 				// Do not patch AppleBacklight on Apple HW, unless forced.
 				kextBacklight.switchOff();
 			}
-
+			bool checksocure = checkKernelArgument("-x");
+			bool checknosoc=checkKernelArgument("-wegnosoc")
 			// Support legacy -wegtree argument.
 			bool rebuidTree = checkKernelArgument("-wegtree");
 
@@ -289,7 +280,26 @@ void WEG::processKernel(KernelPatcher &patcher) {
 			int tree;
 			if (PE_parse_boot_argn("wegtree", &tree, sizeof(tree)))
 				rebuidTree = tree != 0;
-			
+			if (checksocure and checknosoc){
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				SYSLOG("weg","Disable it when you -x.");
+				deinit();
+			}
 			if (rebuidTree) {
 				DBGLOG("weg", "apple-fw proceeding with devprops by request");
 				
