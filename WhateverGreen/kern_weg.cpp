@@ -106,7 +106,17 @@ void WEG::init() {
 	} else {
 		resetFramebuffer = FB_NONE;
 	}
-
+	if (getKernelVersion() >= KernelVersion::Tahoe) {
+		char wegMode[16] = {};
+		if (PE_parse_boot_argn("wegmode", wegMode, sizeof(wegMode)) && strcmp(wegMode, "norec") == 0) {
+			// 检查是否处于恢复模式
+			char rootDmg[256] = {};
+			if (PE_parse_boot_argn("root-dmg", rootDmg, sizeof(rootDmg))) {
+				SYSLOG("weg", "wegmode=norec: detected Recovery mode, skipping WEG initialization");
+				return;
+			}
+		}
+	}
 	// Black screen fix is needed everywhere, but the form depends on the boot-arg.
 	// Former boot-arg name is ngfxpatch.
 	char agdp[128];
