@@ -265,7 +265,7 @@ void WEG::processKernel(KernelPatcher &patcher) {
 				kextBacklight.switchOff();
 			}
 			bool checksocure = checkKernelArgument("-x");
-			bool checknosoc=checkKernelArgument("-wegnosoc")
+			bool checknosoc=checkKernelArgument("-wegnosoc");
 			// Support legacy -wegtree argument.
 			bool rebuidTree = checkKernelArgument("-wegtree");
 
