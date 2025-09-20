@@ -107,8 +107,28 @@ void WEG::init() {
 	} else {
 		resetFramebuffer = FB_NONE;
 	}
-	
-	
+	bool checksocure = checkKernelArgument("-x");
+	bool checknosoc=checkKernelArgument("-wegnosoc");
+	if (checksocure and checknosoc){
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		SYSLOG("weg","Disable it when you -x.");
+		return;
+	}
 	char agdp[128];
 	if (PE_parse_boot_argn("agdpmod", agdp, sizeof(agdp)))
 		processGraphicsPolicyStr(agdp);
@@ -264,8 +284,7 @@ void WEG::processKernel(KernelPatcher &patcher) {
 				// Do not patch AppleBacklight on Apple HW, unless forced.
 				kextBacklight.switchOff();
 			}
-			bool checksocure = checkKernelArgument("-x");
-			bool checknosoc=checkKernelArgument("-wegnosoc");
+			
 			// Support legacy -wegtree argument.
 			bool rebuidTree = checkKernelArgument("-wegtree");
 
@@ -280,26 +299,7 @@ void WEG::processKernel(KernelPatcher &patcher) {
 			int tree;
 			if (PE_parse_boot_argn("wegtree", &tree, sizeof(tree)))
 				rebuidTree = tree != 0;
-			if (checksocure and checknosoc){
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				SYSLOG("weg","Disable it when you -x.");
-				deinit();
-			}
+			
 			if (rebuidTree) {
 				DBGLOG("weg", "apple-fw proceeding with devprops by request");
 				
