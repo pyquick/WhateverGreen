@@ -95,7 +95,6 @@ WEG *WEG::callbackWEG;
 
 void WEG::init() {
 	callbackWEG = this;
-
 	// Background init fix is only necessary on 10.10 and newer.
 	// Former boot-arg name is igfxrst.
 	if (getKernelVersion() >= KernelVersion::Yosemite) {
@@ -107,28 +106,7 @@ void WEG::init() {
 	} else {
 		resetFramebuffer = FB_NONE;
 	}
-	bool checksocure = checkKernelArgument("-x");
-	bool checknosoc=checkKernelArgument("-wegnosoc");
-	if (checksocure and checknosoc){
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		SYSLOG("weg","Disable it when you -x.");
-		return;
-	}
+	
 	char agdp[128];
 	if (PE_parse_boot_argn("agdpmod", agdp, sizeof(agdp)))
 		processGraphicsPolicyStr(agdp);
