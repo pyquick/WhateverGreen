@@ -131,6 +131,7 @@ void RAD::init(bool enableNavi10Bkl) {
 	if (getKernelVersion() >= KernelVersion::Tahoe) {
 		// For macOS Tahoe (Kernel 25) and newer, we must wait for IOGraphicsFamily to load before patching AMDSupport.
 		lilu.onKextLoad(&kextIOGraphicsFamily, 1, onIOGraphicsLoad, this);
+		lilu.onKextLoadForce(&kextRadeonSupport);
 	} else {
 		lilu.onKextLoadForce(&kextRadeonSupport);
 	}
