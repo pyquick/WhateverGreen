@@ -86,7 +86,7 @@ static const char *powerGatingFlags[] {
  */
 static void onIOGraphicsLoad(void *user, KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
 	if (RAD *rad = static_cast<RAD *>(user)) {
-		lilu.onKextLoadForce(&kextRadeonSupport);
+		lilu.onKextLoad(&kextRadeonSupport);
 	}
 }
 RAD *RAD::callbackRAD;
@@ -131,7 +131,8 @@ void RAD::init(bool enableNavi10Bkl) {
 	if (getKernelVersion() >= KernelVersion::Tahoe) {
 		// For macOS Tahoe (Kernel 25) and newer, we must wait for IOGraphicsFamily to load before patching AMDSupport.
 		lilu.onKextLoad(&kextIOGraphicsFamily, 1, onIOGraphicsLoad, this);
-		lilu.onKextLoadForce(&kextRadeonSupport);
+		lilu.onKextLoadForce(&kextIOGraphicsFamily);
+		
 	} else {
 		lilu.onKextLoadForce(&kextRadeonSupport);
 	}
