@@ -130,8 +130,9 @@ void RAD::init(bool enableNavi10Bkl) {
 	// To support overriding connectors and -radvesa mode we need to patch AMDSupport.
 	if (getKernelVersion() >= KernelVersion::Tahoe) {
 		// For macOS Tahoe (Kernel 25) and newer, we must wait for IOGraphicsFamily to load before patching AMDSupport.
-		lilu.onKextLoad(&kextIOGraphicsFamily, 1, onIOGraphicsLoad, this);
+		//lilu.onKextLoad(&kextIOGraphicsFamily, 1, onIOGraphicsLoad, this);
 		lilu.onKextLoadForce(&kextIOGraphicsFamily);
+		lilu.onKextLoadForce(&kextRadeonSupport);
 		
 	} else {
 		lilu.onKextLoadForce(&kextRadeonSupport);
