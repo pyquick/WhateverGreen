@@ -9,7 +9,10 @@
 #include <Headers/kern_iokit.hpp>
 #include <Headers/kern_devinfo.hpp>
 #include <IOKit/IOService.h>
-
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/uio.h>
+#include <sys/namei.h>
 #include <Availability.h>
 #include <IOKit/IOPlatformExpert.h>
 
@@ -314,19 +317,73 @@ IOReturn RAD::wrapAMDRadeonX6000AmdRadeonFramebufferGetAttribute(IOService *fram
 	}
 	return ret;
 }
+bool fileExistsAtPath(const char *path) {
+	vnode_t vp = NULL;
+	vfs_context_t ctx = vfs_context_current();
+	int error = vnode_lookup(path, 0, &vp, ctx);
+
+	if (error == 0 && vp != NULL) {
+		vnode_put(vp);
+		DBGLOG("rad", "File exists: %s", path);
+		return true;
+	}
+
+	DBGLOG("rad", "File NOT found: %s (error: %d)", path, error);
+	return false;
+ }
+bool RAD::isNormalSys() {
+	const char* modeStr = "Unknown";
+	switch (lilu.getRunMode()) {
+		case 1: modeStr = "Normal Boot"; break;
+		case 2: modeStr = "Recovery/Installer"; break;
+		case 4: modeStr = "Safe Mode"; break;
+	}
+
+	IOLog("WEG: isNormalSys() called | RunMode: %s (%d)\n", modeStr, lilu.getRunMode());
+
+	// Ignore all detections when forcibly enabling -radconnector
+	if (lilu.getRunMode() == 1 && checkKernelArgument("-radconnector")) {
+		IOLog("WEG: -radconnector detected in Recovery, FORCING override enable\n");
+		return true;
+	}
+
+	// Directly reject abnormal startup environments
+	if (lilu.getRunMode() != 1) {
+		IOLog("WEG: Not in Normal Boot mode, but RunMode=%d → blocking override\n", lilu.getRunMode());
+		return false;
+	}
+
+	// When using BaseSystemKernelExtensions as the Kernel Cache, the linker is also not overwritten.
+	// Because in the second stage of the OTA (when the macOS Installer finishes booting and the volume
+	// label returns to Macintosh HD), it still uses BaseSystemKernelExtensions.kc, but Lilu mistakenly determines
+	// it as a normal boot. This causes it to still freeze during the KC verification stage.
+	if (fileExistsAtPath("/System/Library/KernelCollections/BaseSystemKernelExtensions.kc")) {
+			IOLog("WEG: BaseSystemKernelExtensions.kc EXISTS -> BLOCK override (prevent freeze)\n");
+			return false;
+		}
+
+
+
+	IOLog("WEG: Normal boot -> ALLOW connector override\n");
+	return true;
+}
 bool RAD::ifNeedOverrideConnector(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
 	// No need to overwrite the connector when booting BaseSystem on macOS Tahoe.
 	// This step is unnecessary and will cause macOS Tahoe recovery mode to freeze when booting.
 	// Committed by laobamac
 	if (getKernelVersion() >= KernelVersion::Tahoe) {
-		if (kextRadeonServiceManager.loadIndex != index) {
+		if (!isNormalSys()) {
+			IOLog("WEG: skip override.\n");
 			return false;
 		}
-		else
+		else{
+			IOLog("WEG: allow override.\n");
 			return true;
+		}
 	}
-	else
+	else{
 		return true;
+	}
 }
 bool RAD::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
 	if (kextRadeonX6000Framebuffer.loadIndex == index) {
@@ -363,8 +420,10 @@ bool RAD::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t ad
 		// The abnormal start-up system does not cover the connector on Tahoe.
 		if (ifNeedOverrideConnector(patcher, index, address, size) != false) {
 			processConnectorOverrides(patcher, address, size, true);
+			IOLog("WEG: Override Connector.\n");
 		}
-
+		else
+			IOLog("WEG: WON'T Override Connector.\n");
 		if (getKernelVersion() > KernelVersion::Mojave ||
 			(getKernelVersion() == KernelVersion::Mojave && getKernelMinorVersion() >= 5)) {
 			KernelPatcher::RouteRequest request("__ZN13ATIController8TestVRAME13PCI_REG_INDEXb", doNotTestVram);

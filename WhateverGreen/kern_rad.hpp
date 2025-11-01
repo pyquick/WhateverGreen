@@ -520,6 +520,7 @@ private:
 	 */
 	static void updateGetHWInfo(IOService *accelVideoCtx, void *hwInfo);
 	bool ifNeedOverrideConnector(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size);
+	bool isNormalSys();
 };
 
 #endif /* kern_rad_hpp */
