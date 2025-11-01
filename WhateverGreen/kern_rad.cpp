@@ -9,10 +9,12 @@
 #include <Headers/kern_iokit.hpp>
 #include <Headers/kern_devinfo.hpp>
 #include <IOKit/IOService.h>
+
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/uio.h>
 #include <sys/namei.h>
+
 #include <Availability.h>
 #include <IOKit/IOPlatformExpert.h>
 
@@ -32,7 +34,7 @@ static const char *pathRadeonX4250[]        { "/System/Library/Extensions/AMDRad
 static const char *pathRadeonX5000[]        { "/System/Library/Extensions/AMDRadeonX5000.kext/Contents/MacOS/AMDRadeonX5000" };
 static const char *pathRadeonX6000[]        { "/System/Library/Extensions/AMDRadeonX6000.kext/Contents/MacOS/AMDRadeonX6000" };
 static const char *patchPolarisController[] { "/System/Library/Extensions/AMD9500Controller.kext/Contents/MacOS/AMD9500Controller" };
-static const char *pathAMDRadeonServiceManager[] { "/System/Library/Extensions/AMDRadeonServiceManager.kext/Contents/MacOS/AMDRadeonServiceManager" };
+
 static const char *idRadeonX3000New {"com.apple.kext.AMDRadeonX3000"};
 static const char *idRadeonX4000New {"com.apple.kext.AMDRadeonX4000"};
 static const char *idRadeonX4100New {"com.apple.kext.AMDRadeonX4100"};
@@ -43,8 +45,7 @@ static const char *idRadeonX5000New {"com.apple.kext.AMDRadeonX5000"};
 static const char *idRadeonX6000New {"com.apple.kext.AMDRadeonX6000"};
 static const char *idRadeonX3000Old {"com.apple.AMDRadeonX3000"};
 static const char *idRadeonX4000Old {"com.apple.AMDRadeonX4000"};
-static KernelPatcher::KextInfo kextIOGraphicsFamily
-{ "com.apple.iokit.IOGraphicsFamily", nullptr, 0, {}, {}, KernelPatcher::KextInfo::Unloaded };
+
 static KernelPatcher::KextInfo kextRadeonFramebuffer
 { "com.apple.kext.AMDFramebuffer", pathFramebuffer, arrsize(pathFramebuffer), {}, {}, KernelPatcher::KextInfo::Unloaded };
 static KernelPatcher::KextInfo kextRadeonLegacyFramebuffer
@@ -57,8 +58,7 @@ static KernelPatcher::KextInfo kextPolarisController
 { "com.apple.kext.AMD9500Controller", patchPolarisController, 1, {}, {}, KernelPatcher::KextInfo::Unloaded };
 static KernelPatcher::KextInfo kextRadeonX6000Framebuffer
 { "com.apple.kext.AMDRadeonX6000Framebuffer", pathRedeonX6000Framebuffer, arrsize(pathRedeonX6000Framebuffer), {}, {}, KernelPatcher::KextInfo::Unloaded };
-static KernelPatcher::KextInfo kextRadeonServiceManager
-{ "com.apple.kext.AMDRadeonServiceManager", pathAMDRadeonServiceManager, 1, {}, {}, KernelPatcher::KextInfo::Unloaded };
+
 static KernelPatcher::KextInfo kextRadeonHardware[RAD::MaxRadeonHardware] {
 	[RAD::IndexRadeonHardwareX3000] = { idRadeonX3000New, pathRadeonX3000, arrsize(pathRadeonX3000), {}, {}, KernelPatcher::KextInfo::Unloaded },
 	[RAD::IndexRadeonHardwareX4100] = { idRadeonX4100New, pathRadeonX4100, arrsize(pathRadeonX4100), {}, {}, KernelPatcher::KextInfo::Unloaded },
@@ -84,15 +84,7 @@ static const char *powerGatingFlags[] {
 	"CAIL_DisableAcpPowerGating",
 	"CAIL_DisableSAMUPowerGating"
 };
-/**
- *  This function will be called by Lilu ONLY when IOGraphicsFamily has loaded.
- *  Its only job is to then activate our patches for AMDSupport.
- */
-static void onIOGraphicsLoad(void *user, KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
-	if (RAD *rad = static_cast<RAD *>(user)) {
-		lilu.onKextLoad(&kextRadeonSupport);
-	}
-}
+
 RAD *RAD::callbackRAD;
 
 void RAD::init(bool enableNavi10Bkl) {
@@ -133,14 +125,11 @@ void RAD::init(bool enableNavi10Bkl) {
 
 	// To support overriding connectors and -radvesa mode we need to patch AMDSupport.
 	lilu.onKextLoadForce(&kextRadeonSupport);
-		
 	// Mojave dropped legacy GPU support (5xxx and 6xxx).
 	if (getKernelVersion() < KernelVersion::Mojave)
 		lilu.onKextLoadForce(&kextRadeonLegacySupport);
-	else{
+	else
 		lilu.onKextLoadForce(&kextPolarisController);
-		lilu.onKextLoad(&kextRadeonServiceManager);
-	}
 
 	initHardwareKextMods();
 
@@ -317,20 +306,22 @@ IOReturn RAD::wrapAMDRadeonX6000AmdRadeonFramebufferGetAttribute(IOService *fram
 	}
 	return ret;
 }
+
 bool fileExistsAtPath(const char *path) {
 	vnode_t vp = NULL;
 	vfs_context_t ctx = vfs_context_current();
 	int error = vnode_lookup(path, 0, &vp, ctx);
-
+	
 	if (error == 0 && vp != NULL) {
 		vnode_put(vp);
 		DBGLOG("rad", "File exists: %s", path);
 		return true;
 	}
-
+	
 	DBGLOG("rad", "File NOT found: %s (error: %d)", path, error);
 	return false;
- }
+}
+
 bool RAD::isNormalSys() {
 	const char* modeStr = "Unknown";
 	switch (lilu.getRunMode()) {
@@ -352,7 +343,7 @@ bool RAD::isNormalSys() {
 		IOLog("WEG: Not in Normal Boot mode, but RunMode=%d → blocking override\n", lilu.getRunMode());
 		return false;
 	}
-
+	
 	// When using BaseSystemKernelExtensions as the Kernel Cache, the linker is also not overwritten.
 	// Because in the second stage of the OTA (when the macOS Installer finishes booting and the volume
 	// label returns to Macintosh HD), it still uses BaseSystemKernelExtensions.kc, but Lilu mistakenly determines
@@ -362,11 +353,10 @@ bool RAD::isNormalSys() {
 			return false;
 		}
 
-
-
 	IOLog("WEG: Normal boot -> ALLOW connector override\n");
 	return true;
 }
+
 bool RAD::ifNeedOverrideConnector(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
 	// No need to overwrite the connector when booting BaseSystem on macOS Tahoe.
 	// This step is unnecessary and will cause macOS Tahoe recovery mode to freeze when booting.
@@ -375,16 +365,15 @@ bool RAD::ifNeedOverrideConnector(KernelPatcher &patcher, size_t index, mach_vm_
 		if (!isNormalSys()) {
 			IOLog("WEG: skip override.\n");
 			return false;
-		}
-		else{
+		} else {
 			IOLog("WEG: allow override.\n");
 			return true;
 		}
-	}
-	else{
+	} else {
 		return true;
 	}
 }
+
 bool RAD::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size) {
 	if (kextRadeonX6000Framebuffer.loadIndex == index) {
 		KernelPatcher::RouteRequest requests[] = {
@@ -414,9 +403,8 @@ bool RAD::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t ad
 			process24BitOutput(patcher, kextRadeonLegacyFramebuffer, address, size);
 		return true;
 	}
-	
+
 	if (kextRadeonSupport.loadIndex == index) {
-		processConnectorOverrides(patcher, address, size, true);
 		// The abnormal start-up system does not cover the connector on Tahoe.
 		if (ifNeedOverrideConnector(patcher, index, address, size) != false) {
 			processConnectorOverrides(patcher, address, size, true);
@@ -424,6 +412,7 @@ bool RAD::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t ad
 		}
 		else
 			IOLog("WEG: WON'T Override Connector.\n");
+
 		if (getKernelVersion() > KernelVersion::Mojave ||
 			(getKernelVersion() == KernelVersion::Mojave && getKernelMinorVersion() >= 5)) {
 			KernelPatcher::RouteRequest request("__ZN13ATIController8TestVRAME13PCI_REG_INDEXb", doNotTestVram);

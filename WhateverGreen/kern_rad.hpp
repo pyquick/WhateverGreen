@@ -519,6 +519,10 @@ private:
 	 *  Wrapped codec hw info method
 	 */
 	static void updateGetHWInfo(IOService *accelVideoCtx, void *hwInfo);
+	
+	/**
+	 *  If need override connector
+	 */
 	bool ifNeedOverrideConnector(KernelPatcher &patcher, size_t index, mach_vm_address_t address, size_t size);
 	bool isNormalSys();
 };
