@@ -406,7 +406,7 @@ bool RAD::processKext(KernelPatcher &patcher, size_t index, mach_vm_address_t ad
 
 	if (kextRadeonSupport.loadIndex == index) {
 		// The abnormal start-up system does not cover the connector on Tahoe.
-		if (ifNeedOverrideConnector(patcher, index, address, size) != false) {
+		if (getKernelVersion() < KernelVersion::Tahoe || checkKernelArgument("-radconnector") || lilu.getRunMode() == LiluAPI::RunningNormal) {
 			processConnectorOverrides(patcher, address, size, true);
 			IOLog("WEG: Override Connector.\n");
 		}
